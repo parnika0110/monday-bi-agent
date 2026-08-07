@@ -36,7 +36,10 @@ export function exportChatToPdf(conversationTitle: string, messages: ChatMessage
     y += 5;
     doc.setFont("helvetica", "normal");
     doc.setTextColor(30);
-    const lines = doc.splitTextToSize(m.content.replace(/\*\*/g, ""), 180);
+    const cleanText = m.content
+      .replace(/\*\*/g, "")
+      .replace(/₹/g, "Rs. ");
+    const lines = doc.splitTextToSize(cleanText, 180);
     for (const line of lines) {
       if (y > 285) {
         doc.addPage();
@@ -61,7 +64,7 @@ export function exportDashboardToPdf(bundle: DashboardBundle) {
   autoTable(doc, {
     startY: 40,
     head: [["KPI", "Value", "Notes"]],
-    body: bundle.kpis.map((k: KpiValue) => [k.label, formatKpiValue(k), k.helpText ?? ""]),
+    body: bundle.kpis.map((k: KpiValue) => [k.label, formatKpiValue(k).replace(/₹/g, "Rs. "), (k.helpText ?? "").replace(/₹/g, "Rs. ")]),
     styles: { fontSize: 9 },
     headStyles: { fillColor: [39, 67, 173] },
   });
@@ -73,9 +76,9 @@ export function exportDashboardToPdf(bundle: DashboardBundle) {
     head: [["Sector", "Pipeline Value", "Collected", "Receivable", "Deals", "Work Orders"]],
     body: bundle.sectorDistribution.map((s) => [
       s.sector,
-      formatCurrencyFull(s.pipelineValue),
-      formatCurrencyFull(s.collected),
-      formatCurrencyFull(s.receivable),
+      formatCurrencyFull(s.pipelineValue).replace(/₹/g, "Rs. "),
+      formatCurrencyFull(s.collected).replace(/₹/g, "Rs. "),
+      formatCurrencyFull(s.receivable).replace(/₹/g, "Rs. "),
       s.dealCount.toString(),
       s.workOrderCount.toString(),
     ]),
@@ -97,7 +100,7 @@ export function exportDashboardToPdf(bundle: DashboardBundle) {
     head: [["Largest Open Opportunities", "Sector", "Value", "Stage", "Win Probability"]],
     body: bundle.largestOpportunities
       .slice(0, 10)
-      .map((d) => [d.dealName, d.sector ?? "-", formatCurrencyFull(d.value), d.stage, `${d.winProbabilityScore}/100`]),
+      .map((d) => [d.dealName, d.sector ?? "-", formatCurrencyFull(d.value).replace(/₹/g, "Rs. "), d.stage, `${d.winProbabilityScore}/100`]),
     styles: { fontSize: 8 },
     headStyles: { fillColor: [39, 67, 173] },
   });
