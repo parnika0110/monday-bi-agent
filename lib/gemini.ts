@@ -107,19 +107,24 @@ export async function generateAnalystResponse(
   customApiKey?: string
 ): Promise<string> {
   const key = (customApiKey && customApiKey.trim().length > 5) ? customApiKey.trim() : getKey();
-  const model = getModel();
+  const primaryModel = getModel();
 
   const styleNote = leadershipStyle ? `\n\nSTYLE:\n${LEADERSHIP_STYLE_GUIDANCE[leadershipStyle] ?? ""}` : "";
   const prompt = `${SYSTEM_PREAMBLE}${styleNote}\n\nQUESTION:\n${userQuestion}\n\nDATA:\n${dataSummary}\n\nWrite the analyst response now.`;
 
-  try {
-    return await callGeminiOnce(prompt, key, model);
-  } catch (err) {
-    console.warn("First Gemini call failed, retrying with gemini-flash-latest:", (err as Error).message);
+  const candidateModels = Array.from(
+    new Set([primaryModel, "gemini-2.5-flash", "gemini-flash-latest", "gemini-2.0-flash-lite", "gemini-2.0-flash"])
+  );
+
+  let lastError: unknown;
+  for (const m of candidateModels) {
     try {
-      return await callGeminiOnce(prompt, key, "gemini-flash-latest");
-    } catch (retryErr) {
-      throw retryErr;
+      return await callGeminiOnce(prompt, key, m);
+    } catch (err) {
+      lastError = err;
+      console.warn(`Gemini model [${m}] attempt failed:`, (err as Error).message);
     }
   }
+
+  throw lastError;
 }
