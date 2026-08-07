@@ -43,54 +43,54 @@ export function KpiCard({ kpi, title, value, subtext, trend, icon: Icon, badge }
   const deltaLabel = kpi?.deltaLabel;
 
   return (
-    <div className="soft-card p-6 transition-all duration-200 hover:-translate-y-0.5">
+    <div className="rounded-xl border border-slate-200/70 bg-white p-4 shadow-2xs transition-all hover:border-slate-300 dark:border-slate-800/70 dark:bg-[#111622] dark:hover:border-slate-700">
       <div className="flex items-center justify-between gap-2">
-        <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">{displayTitle}</span>
+        <span className="text-xs font-medium text-slate-500 dark:text-slate-400">{displayTitle}</span>
         {badge ? (
-          <span className="rounded-full bg-purple-50 px-2.5 py-0.5 text-[10px] font-semibold text-purple-900 border border-purple-100 dark:bg-purple-950 dark:text-purple-300 dark:border-purple-900/50">
+          <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600 dark:bg-slate-800/80 dark:text-slate-300">
             {badge}
           </span>
         ) : Icon ? (
-          <Icon size={16} className="text-purple-400 dark:text-purple-300" />
+          <Icon size={15} className="text-slate-400 dark:text-slate-500" />
         ) : null}
       </div>
 
-      <div className="mt-3 flex items-baseline justify-between gap-2">
-        <div className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white font-mono">
+      <div className="mt-2.5 flex items-baseline justify-between gap-2">
+        <div className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white font-mono">
           {displayValue}
         </div>
 
         {trend ? (
           <div
             className={clsx(
-              "flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-semibold",
-              trend.direction === "up" && "bg-emerald-50 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300",
-              trend.direction === "down" && "bg-amber-50 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300",
-              trend.direction === "neutral" && "bg-slate-50 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
+              "flex items-center gap-1 text-[11px] font-medium",
+              trend.direction === "up" && "text-emerald-600 dark:text-emerald-400",
+              trend.direction === "down" && "text-amber-600 dark:text-amber-400",
+              trend.direction === "neutral" && "text-slate-500 dark:text-slate-400"
             )}
           >
-            {trend.direction === "up" && <TrendingUp size={12} />}
-            {trend.direction === "down" && <TrendingDown size={12} />}
-            {trend.direction === "neutral" && <Minus size={12} />}
+            {trend.direction === "up" && <TrendingUp size={13} />}
+            {trend.direction === "down" && <TrendingDown size={13} />}
+            {trend.direction === "neutral" && <Minus size={13} />}
             <span>{trend.label}</span>
           </div>
         ) : delta !== undefined && delta !== null ? (
           <div
             className={clsx(
-              "flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-semibold",
-              delta > 0 && "bg-emerald-50 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300",
-              delta < 0 && "bg-amber-50 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300",
-              delta === 0 && "bg-slate-50 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
+              "flex items-center gap-1 text-[11px] font-medium",
+              delta > 0 && "text-emerald-600 dark:text-emerald-400",
+              delta < 0 && "text-amber-600 dark:text-amber-400",
+              delta === 0 && "text-slate-500 dark:text-slate-400"
             )}
           >
-            {delta > 0 ? <TrendingUp size={12} /> : delta < 0 ? <TrendingDown size={12} /> : <Minus size={12} />}
+            {delta > 0 ? <TrendingUp size={13} /> : delta < 0 ? <TrendingDown size={13} /> : <Minus size={13} />}
             <span>{deltaLabel ?? `${delta > 0 ? "+" : ""}${delta}%`}</span>
           </div>
         ) : null}
       </div>
 
       {displaySubtext && (
-        <p className="mt-2 text-xs text-slate-400 dark:text-slate-500">
+        <p className="mt-1 text-[11px] text-slate-400 dark:text-slate-500">
           {displaySubtext}
         </p>
       )}

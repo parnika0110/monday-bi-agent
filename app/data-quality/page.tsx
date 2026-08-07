@@ -1,7 +1,7 @@
 "use client";
 
 import { useDashboardData } from "@/hooks/useDashboardData";
-import { RefreshCw, Sparkles } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 
 export default function DataQualityPage() {
   const { data: bundle, loading, error, refresh } = useDashboardData();
@@ -9,8 +9,8 @@ export default function DataQualityPage() {
   if (loading || !bundle) {
     return (
       <div className="flex h-96 items-center justify-center">
-        <div className="flex items-center gap-2.5 text-purple-600">
-          <RefreshCw className="animate-spin" size={18} />
+        <div className="flex items-center gap-2.5 text-slate-400">
+          <RefreshCw className="animate-spin text-slate-900 dark:text-slate-100" size={20} />
           <span className="text-xs font-medium">Auditing Monday.com data quality...</span>
         </div>
       </div>
@@ -19,7 +19,7 @@ export default function DataQualityPage() {
 
   if (error) {
     return (
-      <div className="rounded-2xl border border-rose-200 bg-rose-50/50 p-6 text-rose-700 dark:border-rose-900/50 dark:bg-rose-950/20 text-xs">
+      <div className="rounded-xl border border-red-200 bg-red-50/50 p-6 text-red-700 dark:border-red-900/50 dark:bg-red-950/20 text-xs">
         <h2 className="font-bold text-sm">Data Quality Audit Unavailable</h2>
         <p className="mt-1">{error}</p>
       </div>
@@ -29,12 +29,12 @@ export default function DataQualityPage() {
   const dq = bundle.dataQuality;
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto py-2">
+    <div className="space-y-6 max-w-6xl">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
-            Data Quality &amp; Governance
+            Data Quality &amp; Governance Center
           </h1>
           <p className="text-xs text-slate-500 dark:text-slate-400">
             Realtime completeness audit across Monday.com column signatures
@@ -43,7 +43,7 @@ export default function DataQualityPage() {
 
         <button
           onClick={() => refresh()}
-          className="flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-medium text-slate-700 shadow-2xs transition hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300"
+          className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 shadow-2xs transition hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300"
         >
           <RefreshCw size={13} />
           <span>Re-audit Boards</span>
@@ -51,10 +51,10 @@ export default function DataQualityPage() {
       </div>
 
       {/* Score Summary Banner */}
-      <div className="soft-card p-6">
+      <div className="rounded-xl border border-slate-200/70 bg-white p-5 shadow-2xs dark:border-slate-800/70 dark:bg-[#111622]">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-purple-600 font-bold text-white text-lg shadow-soft">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-900 font-bold text-white text-lg dark:bg-slate-100 dark:text-slate-900">
               {dq.overallScore}
             </div>
             <div>
@@ -68,29 +68,29 @@ export default function DataQualityPage() {
           </div>
 
           <div className="flex items-center gap-2">
-            <div className="rounded-2xl border border-purple-100 bg-purple-50/60 px-4 py-2 text-center dark:border-purple-900/40 dark:bg-purple-950/40">
-              <p className="text-[10px] font-semibold text-purple-900 dark:text-purple-300">Audited Fields</p>
-              <p className="text-xs font-bold text-purple-950 dark:text-white">{dq.fields.length}</p>
+            <div className="rounded-lg border border-slate-200/70 bg-slate-50 px-3.5 py-1.5 text-center dark:border-slate-800/70 dark:bg-slate-900">
+              <p className="text-[10px] font-semibold text-slate-400">Audited Fields</p>
+              <p className="text-xs font-bold text-slate-900 dark:text-white">{dq.fields.length}</p>
             </div>
 
-            <div className="rounded-2xl border border-amber-100 bg-amber-50/60 px-4 py-2 text-center dark:border-amber-900/40 dark:bg-amber-950/40">
-              <p className="text-[10px] font-semibold text-amber-900 dark:text-amber-300">Data Warnings</p>
-              <p className="text-xs font-bold text-amber-950 dark:text-white">{bundle.warnings.length}</p>
+            <div className="rounded-lg border border-slate-200/70 bg-slate-50 px-3.5 py-1.5 text-center dark:border-slate-800/70 dark:bg-slate-900">
+              <p className="text-[10px] font-semibold text-slate-400">Data Warnings</p>
+              <p className="text-xs font-bold text-amber-600 dark:text-amber-400">{bundle.warnings.length}</p>
             </div>
           </div>
         </div>
       </div>
 
       {/* Field Completeness Table */}
-      <div className="soft-card p-6">
-        <h3 className="mb-4 text-xs font-bold text-slate-900 dark:text-white">
-          Field Completeness &amp; Recommended Actions
+      <div className="rounded-xl border border-slate-200/70 bg-white p-5 shadow-2xs dark:border-slate-800/70 dark:bg-[#111622]">
+        <h3 className="mb-3 text-xs font-bold text-slate-900 dark:text-white">
+          Field Completeness &amp; Recommended Fixes
         </h3>
 
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead>
-              <tr className="border-b border-slate-100 text-slate-400 dark:border-slate-800">
+              <tr className="border-b border-slate-200/70 text-slate-400 dark:border-slate-800/70">
                 <th className="py-2.5 font-semibold">Field Name</th>
                 <th className="py-2.5 font-semibold">Board Name</th>
                 <th className="py-2.5 font-semibold">Missing Records</th>
@@ -99,11 +99,11 @@ export default function DataQualityPage() {
                 <th className="py-2.5 font-semibold">Recommended Action</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-50 dark:divide-slate-800/40">
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800/40">
               {dq.fields.map((field, idx) => {
                 const compPct = Math.round(field.completeness * 100);
                 return (
-                  <tr key={idx} className="hover:bg-purple-50/30 dark:hover:bg-slate-900/30 transition">
+                  <tr key={idx} className="hover:bg-slate-50/50 dark:hover:bg-slate-900/30 transition">
                     <td className="py-2.5 font-medium text-slate-900 dark:text-white">{field.field}</td>
                     <td className="py-2.5 text-slate-500 dark:text-slate-400">{field.boardName}</td>
                     <td className="py-2.5 text-slate-700 dark:text-slate-300">
@@ -111,9 +111,9 @@ export default function DataQualityPage() {
                     </td>
                     <td className="py-2.5">
                       <div className="flex items-center gap-2">
-                        <div className="h-1.5 w-16 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+                        <div className="h-1.5 w-16 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
                           <div
-                            className={compPct > 80 ? "h-full bg-purple-600" : compPct > 50 ? "h-full bg-amber-500" : "h-full bg-rose-500"}
+                            className={compPct > 80 ? "h-full bg-slate-900 dark:bg-slate-100" : compPct > 50 ? "h-full bg-amber-500" : "h-full bg-rose-500"}
                             style={{ width: `${compPct}%` }}
                           />
                         </div>
@@ -122,12 +122,12 @@ export default function DataQualityPage() {
                     </td>
                     <td className="py-2.5">
                       <span
-                        className={`rounded-full px-2.5 py-0.5 font-semibold text-[10px] ${
+                        className={`rounded-md px-2 py-0.5 font-semibold text-[10px] ${
                           field.severity === "high"
                             ? "bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300"
                             : field.severity === "medium"
                             ? "bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300"
-                            : "bg-purple-50 text-purple-700 dark:bg-purple-950/40 dark:text-purple-300"
+                            : "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300"
                         }`}
                       >
                         {field.severity.toUpperCase()}

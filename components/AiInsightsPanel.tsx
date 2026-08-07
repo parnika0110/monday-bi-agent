@@ -1,6 +1,6 @@
 "use client";
 
-import { Sparkles, AlertCircle, CheckCircle2, TrendingUp, ArrowUpRight } from "lucide-react";
+import { Sparkles, AlertTriangle, CheckCircle2, TrendingUp, ArrowUpRight } from "lucide-react";
 import Link from "next/link";
 
 interface AiInsightsPanelProps {
@@ -33,10 +33,10 @@ export function AiInsightsPanel({
   recommendations = DEFAULT_RECOMMENDATIONS,
 }: AiInsightsPanelProps) {
   return (
-    <div className="soft-card p-6 shadow-soft">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4 dark:border-slate-800">
+    <div className="rounded-xl border border-slate-200/70 bg-white p-5 shadow-2xs dark:border-slate-800/70 dark:bg-[#111622]">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200/70 pb-4 dark:border-slate-800/70">
         <div className="flex items-center gap-2.5">
-          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-purple-600 text-white shadow-soft">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900">
             <Sparkles size={16} />
           </div>
           <div>
@@ -50,24 +50,24 @@ export function AiInsightsPanel({
         </div>
 
         <Link
-          href="/"
-          className="inline-flex items-center gap-1.5 rounded-full bg-purple-600 px-4 py-2 text-xs font-semibold text-white shadow-soft transition hover:bg-purple-700 active:scale-95"
+          href="/copilot"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-slate-800 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-200"
         >
           <span>Ask AI Copilot</span>
           <ArrowUpRight size={13} />
         </Link>
       </div>
 
-      <div className="mt-6 grid gap-4 md:grid-cols-3">
-        {/* Key Highlights */}
-        <div className="rounded-2xl border border-emerald-100/80 bg-emerald-50/40 p-4.5 dark:border-emerald-900/40 dark:bg-emerald-950/20">
+      <div className="mt-5 grid gap-4 md:grid-cols-3">
+        {/* Insights Column */}
+        <div className="rounded-lg border border-slate-200/70 bg-slate-50/60 p-4 dark:border-slate-800/60 dark:bg-slate-900/40">
           <div className="mb-3 flex items-center gap-2">
             <TrendingUp size={15} className="text-emerald-600 dark:text-emerald-400" />
-            <h3 className="text-xs font-bold text-emerald-950 dark:text-emerald-200">
+            <h3 className="text-xs font-semibold text-slate-900 dark:text-white">
               Key Highlights
             </h3>
           </div>
-          <ul className="space-y-2.5 text-xs text-slate-600 dark:text-slate-400">
+          <ul className="space-y-2 text-xs text-slate-600 dark:text-slate-400">
             {insights.map((item, i) => (
               <li key={i} className="flex items-start gap-2">
                 <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" />
@@ -77,15 +77,15 @@ export function AiInsightsPanel({
           </ul>
         </div>
 
-        {/* Attention Required */}
-        <div className="rounded-2xl border border-amber-100/80 bg-amber-50/40 p-4.5 dark:border-amber-900/40 dark:bg-amber-950/20">
+        {/* Risks Column */}
+        <div className="rounded-lg border border-slate-200/70 bg-slate-50/60 p-4 dark:border-slate-800/60 dark:bg-slate-900/40">
           <div className="mb-3 flex items-center gap-2">
-            <AlertCircle size={15} className="text-amber-600 dark:text-amber-400" />
-            <h3 className="text-xs font-bold text-amber-950 dark:text-amber-200">
+            <AlertTriangle size={15} className="text-amber-600 dark:text-amber-400" />
+            <h3 className="text-xs font-semibold text-slate-900 dark:text-white">
               Attention Required
             </h3>
           </div>
-          <ul className="space-y-2.5 text-xs text-slate-600 dark:text-slate-400">
+          <ul className="space-y-2 text-xs text-slate-600 dark:text-slate-400">
             {risks.map((item, i) => (
               <li key={i} className="flex items-start gap-2">
                 <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500" />
@@ -95,18 +95,18 @@ export function AiInsightsPanel({
           </ul>
         </div>
 
-        {/* Strategic Actions */}
-        <div className="rounded-2xl border border-purple-100/80 bg-purple-50/40 p-4.5 dark:border-purple-900/40 dark:bg-purple-950/20">
+        {/* Recommendations Column */}
+        <div className="rounded-lg border border-slate-200/70 bg-slate-50/60 p-4 dark:border-slate-800/60 dark:bg-slate-900/40">
           <div className="mb-3 flex items-center gap-2">
-            <CheckCircle2 size={15} className="text-purple-600 dark:text-purple-400" />
-            <h3 className="text-xs font-bold text-purple-950 dark:text-purple-200">
+            <CheckCircle2 size={15} className="text-blue-600 dark:text-blue-400" />
+            <h3 className="text-xs font-semibold text-slate-900 dark:text-white">
               Strategic Actions
             </h3>
           </div>
-          <ul className="space-y-2.5 text-xs text-slate-600 dark:text-slate-400">
+          <ul className="space-y-2 text-xs text-slate-600 dark:text-slate-400">
             {recommendations.map((item, i) => (
               <li key={i} className="flex items-start gap-2">
-                <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-purple-500" />
+                <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-blue-500" />
                 <span className="leading-relaxed">{item}</span>
               </li>
             ))}
