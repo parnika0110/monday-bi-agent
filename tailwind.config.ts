@@ -11,26 +11,43 @@ const config: Config = {
     extend: {
       colors: {
         brand: {
-          50: "#eef4ff",
-          100: "#dbe6ff",
-          200: "#b8ccff",
-          300: "#8ba8ff",
-          400: "#5c7dff",
-          500: "#3457d5",
-          600: "#2743ad",
-          700: "#1f3689",
-          800: "#1a2c6e",
-          900: "#17265b",
+          50: "#f5f3ff",
+          100: "#ede9fe",
+          200: "#ddd6fe",
+          300: "#c4b5fd",
+          400: "#a78bfa",
+          500: "#8b5cf6",
+          600: "#7c3aed",
+          700: "#6d28d9",
+          800: "#5b21b6",
+          900: "#4c1d95",
+        },
+        lavender: {
+          50: "#FAF7FF",
+          100: "#F5F0FF",
+          200: "#E9E0FF",
+          300: "#DCCFFF",
+          400: "#CDBEFF",
+          500: "#B8A6FF",
+          600: "#9E86FF",
+          700: "#8062F8",
+        },
+        pastel: {
+          mint: "#A7F3D0",
+          yellow: "#FDE68A",
+          pink: "#FBCFE8",
+          sky: "#BAE6FD",
+          rose: "#FECDD3",
         },
       },
-      backgroundImage: {
-        "grid-light":
-          "linear-gradient(to right, rgba(15,23,42,0.04) 1px, transparent 1px), linear-gradient(to bottom, rgba(15,23,42,0.04) 1px, transparent 1px)",
-        "grid-dark":
-          "linear-gradient(to right, rgba(255,255,255,0.04) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.04) 1px, transparent 1px)",
+      borderRadius: {
+        "4xl": "2rem",
+        "3xl": "1.5rem",
       },
-      backgroundSize: {
-        grid: "28px 28px",
+      boxShadow: {
+        soft: "0 4px 20px 0 rgba(0, 0, 0, 0.03)",
+        "soft-lg": "0 8px 30px 0 rgba(0, 0, 0, 0.04)",
+        "lavender-glow": "0 8px 25px -4px rgba(184, 166, 255, 0.25)",
       },
       keyframes: {
         shimmer: {
@@ -45,10 +62,6 @@ const config: Config = {
       animation: {
         shimmer: "shimmer 1.6s linear infinite",
         "fade-in": "fade-in 0.25s ease-out",
-      },
-      boxShadow: {
-        glass: "0 8px 32px 0 rgba(31, 41, 55, 0.08)",
-        "glass-dark": "0 8px 32px 0 rgba(0, 0, 0, 0.35)",
       },
     },
   },
