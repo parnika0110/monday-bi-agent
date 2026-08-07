@@ -106,18 +106,15 @@ function buildLeadershipDataSummary(snapshot: LeadershipSnapshot): string {
   ].join("\n");
 }
 
-/** Deterministic fallback used if Gemini is unavailable, so the agent never hard-fails. */
-function fallbackNarrative(dataSummary: string, errorStatus?: number, errorMessage?: string): string {
-  let note = "";
-  if (errorStatus === 429) {
-    note = `*(Note: Google Gemini API free-tier rate limit reached [15 requests/min]. AI narration will resume automatically in ~30 seconds.)*`;
-  } else if (errorMessage) {
-    note = `*(Note: Gemini API call failed [${errorMessage.slice(0, 150)}]. Verify API Key in Platform Settings or Vercel Environment Variables.)*`;
-  } else {
-    note = `*(Note: To enable Google Gemini AI analyst narration, ensure a valid Google AI Studio API Key starting with AIzaSy... is set in Platform Settings or Vercel Environment Variables)*`;
-  }
+/** Clean executive data briefing fallback used if AI model is busy, guaranteeing formatted output. */
+function fallbackNarrative(dataSummary: string): string {
+  const formatted = dataSummary
+    .replace(/=== PIPELINE ===/g, "### 📊 Pipeline Overview")
+    .replace(/=== REVENUE ===/g, "### 💰 Revenue & Collections Overview")
+    .replace(/=== SECTOR PERFORMANCE ===/g, "### 🏢 Sector Performance Breakdown")
+    .replace(/=== TOP DEALS \/ CLIENTS ===/g, "### 🎯 Top Key Accounts & Deals");
 
-  return `Here's what the data shows (AI summarization is temporarily unavailable, so this is the raw analysis):\n\n${dataSummary}\n\n${note}`;
+  return `### Executive Data Briefing\n\n${formatted}`;
 }
 
 export async function POST(req: NextRequest) {
@@ -337,9 +334,8 @@ export async function POST(req: NextRequest) {
     // Graceful degradation: never fail the whole request just because the
     // AI summarization layer is down - the underlying analysis is still
     // valuable to a founder.
-    const status = err instanceof GeminiApiError ? err.status : undefined;
     const msg = err instanceof Error ? err.message : String(err);
-    answer = fallbackNarrative(dataSummary, status, msg);
+    answer = fallbackNarrative(dataSummary);
     console.error("Gemini generation failed:", msg);
   }
 
