@@ -108,10 +108,11 @@ function buildLeadershipDataSummary(snapshot: LeadershipSnapshot): string {
 
 /** Deterministic fallback used if Gemini is unavailable, so the agent never hard-fails. */
 function fallbackNarrative(dataSummary: string): string {
-  return `Here's what the data shows (AI summarization is temporarily unavailable, so this is the raw analysis):\n\n${dataSummary}`;
+  return `Here's what the data shows (AI summarization is temporarily unavailable, so this is the raw analysis):\n\n${dataSummary}\n\n*(Note: To enable Google Gemini AI analyst narration, ensure a valid Google AI Studio API Key starting with AIzaSy... is set in Platform Settings or Vercel Environment Variables)*`;
 }
 
 export async function POST(req: NextRequest) {
+  const userGeminiKey = req.headers.get("x-user-gemini-key") || undefined;
   let body: { message?: string };
   try {
     body = await req.json();
@@ -321,7 +322,7 @@ export async function POST(req: NextRequest) {
   // 4. Ask Gemini to turn the numbers into an analyst-style answer.
   let answer: string;
   try {
-    answer = await generateAnalystResponse(question, dataSummary, routed.leadershipStyle);
+    answer = await generateAnalystResponse(question, dataSummary, routed.leadershipStyle, userGeminiKey);
   } catch (err) {
     // Graceful degradation: never fail the whole request just because the
     // AI summarization layer is down - the underlying analysis is still

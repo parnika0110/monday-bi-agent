@@ -1,20 +1,37 @@
 "use client";
 
 import { useTheme } from "@/components/theme";
+import { useState, useEffect } from "react";
 import {
-  Settings as SettingsIcon,
   Moon,
   Sun,
   Key,
   Database,
   Bot,
-  RefreshCw,
   CheckCircle2,
-  Sliders,
+  Save,
+  Check,
 } from "lucide-react";
 
 export default function SettingsPage() {
   const { theme, toggleTheme } = useTheme();
+  const [apiKey, setApiKey] = useState("");
+  const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("skylark-user-gemini-key") || "";
+      setApiKey(stored);
+    }
+  }, []);
+
+  function handleSaveKey() {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("skylark-user-gemini-key", apiKey.trim());
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2500);
+    }
+  }
 
   return (
     <div className="space-y-6 max-w-4xl">
@@ -67,15 +84,35 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        <div className="mt-4 space-y-3 text-xs">
+        <div className="mt-4 space-y-4 text-xs">
           <div className="flex items-center justify-between rounded-xl bg-slate-50 p-3 dark:bg-slate-950">
-            <span className="font-medium text-slate-700 dark:text-slate-300">Model Active</span>
-            <span className="font-mono text-slate-900 dark:text-slate-100">gemini-2.5-flash</span>
+            <span className="font-medium text-slate-700 dark:text-slate-300">Active Model</span>
+            <span className="font-mono text-slate-900 dark:text-slate-100">gemini-1.5-flash</span>
           </div>
 
-          <div className="flex items-center justify-between rounded-xl bg-slate-50 p-3 dark:bg-slate-950">
-            <span className="font-medium text-slate-700 dark:text-slate-300">Fallback Protection</span>
-            <span className="font-semibold text-emerald-600">Deterministic Analytics Backup Enabled</span>
+          <div className="space-y-2">
+            <label className="block font-semibold text-slate-700 dark:text-slate-300">
+              Google AI Studio Gemini API Key
+            </label>
+            <p className="text-[11px] text-slate-400">
+              Get your free API key at <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer" className="text-brand-600 underline">aistudio.google.com</a> (starts with AIzaSy...).
+            </p>
+            <div className="flex gap-2">
+              <input
+                type="password"
+                value={apiKey}
+                onChange={(e) => setApiKey(e.target.value)}
+                placeholder="AIzaSy..."
+                className="flex-1 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-mono text-slate-900 outline-none focus:border-brand-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
+              />
+              <button
+                onClick={handleSaveKey}
+                className="flex items-center gap-1.5 rounded-xl bg-brand-600 px-4 py-2 text-xs font-semibold text-white transition hover:bg-brand-700 active:scale-95"
+              >
+                {saved ? <Check size={14} className="text-emerald-300" /> : <Save size={14} />}
+                <span>{saved ? "Saved" : "Save Key"}</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>

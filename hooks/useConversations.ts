@@ -54,9 +54,7 @@ function saveAll(conversations: Conversation[]) {
   try {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(conversations));
   } catch {
-    // localStorage can throw in private-browsing / quota-exceeded cases -
-    // conversations simply won't persist across reloads, which is a safe
-    // degradation rather than a crash.
+    // Graceful fallback if localStorage is restricted
   }
 }
 
@@ -104,6 +102,26 @@ export function useConversations() {
     },
     [conversations, activeId, persist]
   );
+
+  const clearCurrentConversation = useCallback(() => {
+    if (!activeId) return;
+    const next = conversations.map((c) => {
+      if (c.id !== activeId) return c;
+      return {
+        ...c,
+        title: "New conversation",
+        messages: [welcomeMessage()],
+        updatedAt: Date.now(),
+      };
+    });
+    persist(next);
+  }, [conversations, activeId, persist]);
+
+  const clearAllConversations = useCallback(() => {
+    const conv = newConversation();
+    persist([conv]);
+    setActiveId(conv.id);
+  }, [persist]);
 
   const appendMessage = useCallback(
     (conversationId: string, message: ChatMessage) => {
@@ -153,6 +171,8 @@ export function useConversations() {
     setActiveId,
     createConversation,
     deleteConversation,
+    clearCurrentConversation,
+    clearAllConversations,
     appendMessage,
     updateMessage,
     renameConversation,

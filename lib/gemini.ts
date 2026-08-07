@@ -104,9 +104,10 @@ async function callGeminiOnce(
 export async function generateAnalystResponse(
   userQuestion: string,
   dataSummary: string,
-  leadershipStyle?: string
+  leadershipStyle?: string,
+  customApiKey?: string
 ): Promise<string> {
-  const key = getKey();
+  const key = (customApiKey && customApiKey.trim().length > 5) ? customApiKey.trim() : getKey();
   const model = getModel();
 
   const styleNote = leadershipStyle ? `\n\nSTYLE:\n${LEADERSHIP_STYLE_GUIDANCE[leadershipStyle] ?? ""}` : "";
@@ -119,7 +120,6 @@ export async function generateAnalystResponse(
     try {
       return await callGeminiOnce(prompt, key, model);
     } catch (retryErr) {
-      // If gemini-1.5-flash fails or is unavailable, try gemini-1.5-pro as fallback
       if (model !== "gemini-1.5-pro") {
         console.warn("Retrying with fallback model gemini-1.5-pro...");
         return await callGeminiOnce(prompt, key, "gemini-1.5-pro");

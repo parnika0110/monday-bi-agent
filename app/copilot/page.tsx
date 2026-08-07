@@ -6,10 +6,17 @@ import { ChatMessageView } from "@/components/ChatMessageView";
 import { QuickActions } from "@/components/QuickActions";
 import { DataQualityWarning } from "@/lib/types";
 import { exportChatToPdf } from "@/lib/export";
-import { Send, Download, Sparkles, RefreshCw, Bot } from "lucide-react";
+import { Send, Download, Sparkles, RefreshCw, Bot, Trash2, Plus } from "lucide-react";
 
 export default function CopilotPage() {
-  const { active, activeId, appendMessage, hydrated } = useConversations();
+  const {
+    active,
+    activeId,
+    appendMessage,
+    hydrated,
+    createConversation,
+    clearCurrentConversation,
+  } = useConversations();
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -39,9 +46,13 @@ export default function CopilotPage() {
     setLoading(true);
 
     try {
+      const customKey = typeof window !== "undefined" ? window.localStorage.getItem("skylark-user-gemini-key") || "" : "";
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (customKey) headers["x-user-gemini-key"] = customKey;
+
       const res = await fetch("/api/chat", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify({ message: trimmed }),
       });
 
@@ -90,30 +101,51 @@ export default function CopilotPage() {
   return (
     <div className="flex h-[calc(100vh-6.5rem)] flex-col rounded-2xl border border-slate-200/80 bg-white/60 shadow-xs backdrop-blur-xl dark:border-slate-800/80 dark:bg-slate-900/60">
       {/* Header bar */}
-      <div className="flex items-center justify-between border-b border-slate-200/80 px-6 py-4 dark:border-slate-800">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-tr from-brand-600 to-indigo-600 font-bold text-white shadow-md shadow-brand-500/20">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200/80 px-6 py-4 dark:border-slate-800">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-brand-600 to-indigo-600 font-bold text-white shadow-md shadow-brand-500/20">
             <Bot size={20} />
           </div>
-          <div>
-            <h1 className="text-base font-bold text-slate-900 dark:text-white">
+          <div className="min-w-0">
+            <h1 className="truncate text-base font-bold text-slate-900 dark:text-white">
               {active?.title || "AI Copilot Session"}
             </h1>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
+            <p className="truncate text-xs text-slate-500 dark:text-slate-400">
               Live queries against Monday.com Deal Funnel &amp; Work Order Tracker
             </p>
           </div>
         </div>
 
-        {active && active.messages.length > 1 && (
+        <div className="flex items-center gap-2">
           <button
-            onClick={handleExportPdf}
-            className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-2xs transition hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300"
+            onClick={() => createConversation()}
+            className="flex items-center gap-1.5 rounded-xl bg-brand-600 px-3 py-1.5 text-xs font-semibold text-white shadow-xs transition hover:bg-brand-700 active:scale-95"
+            title="Start new conversation"
           >
-            <Download size={14} />
-            <span>Export PDF</span>
+            <Plus size={14} />
+            <span>New Chat</span>
           </button>
-        )}
+
+          <button
+            onClick={clearCurrentConversation}
+            className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 shadow-2xs transition hover:bg-slate-100 hover:text-red-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-red-400"
+            title="Reset current conversation"
+          >
+            <Trash2 size={13} />
+            <span>Clear Chat</span>
+          </button>
+
+          {active && active.messages.length > 1 && (
+            <button
+              onClick={handleExportPdf}
+              className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-2xs transition hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300"
+              title="Export conversation to PDF"
+            >
+              <Download size={14} />
+              <span>Export PDF</span>
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Messages Scroll Area */}
