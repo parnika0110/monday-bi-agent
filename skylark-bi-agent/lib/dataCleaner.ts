@@ -78,10 +78,27 @@ function buildFieldIndex(
 // Value normalizers
 // -----------------------------------------------------------------------
 
-export function normalizeSectorName(raw: string | null | undefined): string | null {
-  if (!raw) return null;
-  const trimmed = raw.trim();
-  if (trimmed === "") return null;
+/** Values that mean "no real data was entered" even though the cell isn't literally empty. */
+const JUNK_VALUES = new Set(["none", "n/a", "na", "tbd", "-", "--", "?", "unknown", "null"]);
+
+function isJunkValue(trimmedLower: string): boolean {
+  return JUNK_VALUES.has(trimmedLower);
+}
+
+/** True if a raw cell value (string | number | null) represents "no data entered". */
+export function isBlank(value: string | number | null | undefined): boolean {
+  if (value === null || value === undefined) return true;
+  if (typeof value === "number") return isNaN(value);
+  const trimmed = value.trim();
+  return trimmed === "" || isJunkValue(trimmed.toLowerCase());
+}
+
+export function normalizeSectorName(
+  raw: string | number | null | undefined
+): string | null {
+  if (raw === null || raw === undefined) return null;
+  const trimmed = raw.toString().trim();
+  if (trimmed === "" || isJunkValue(trimmed.toLowerCase())) return null;
   // "Energy" / "energy" / "ENERGY " -> "Energy"
   return trimmed
     .toLowerCase()
@@ -92,10 +109,10 @@ export function normalizeSectorName(raw: string | null | undefined): string | nu
 }
 
 /** Parses a wide range of date string formats into ISO (YYYY-MM-DD), or null. */
-export function normalizeDate(raw: string | null | undefined): string | null {
-  if (!raw) return null;
-  const trimmed = raw.trim();
-  if (trimmed === "") return null;
+export function normalizeDate(raw: string | number | null | undefined): string | null {
+  if (raw === null || raw === undefined) return null;
+  const trimmed = raw.toString().trim();
+  if (trimmed === "" || isJunkValue(trimmed.toLowerCase())) return null;
 
   // Monday.com date columns usually come through as "YYYY-MM-DD" already,
   // but handle DD/MM/YYYY, MM/DD/YYYY and "27 Sep 2025" style strings too.
@@ -120,10 +137,11 @@ export function normalizeDate(raw: string | null | undefined): string | null {
 }
 
 /** Parses currency-like strings ("₹1,23,456.00", "1234", "") into a number, or null. */
-export function normalizeNumber(raw: string | null | undefined): number | null {
+export function normalizeNumber(raw: string | number | null | undefined): number | null {
   if (raw === null || raw === undefined) return null;
+  if (typeof raw === "number") return isNaN(raw) ? null : raw;
   const trimmed = raw.toString().trim();
-  if (trimmed === "") return null;
+  if (trimmed === "" || isJunkValue(trimmed.toLowerCase())) return null;
   const cleaned = trimmed.replace(/[₹$,\s]/g, "");
   const num = parseFloat(cleaned);
   return isNaN(num) ? null : num;
@@ -192,7 +210,7 @@ export function cleanDataset(
     for (const field of numericFields) {
       const columnKey = index[field];
       if (columnKey) {
-        next[`__${field}`] = normalizeNumber(record[columnKey]) as unknown as string;
+        next[`__${field}`] = normalizeNumber(record[columnKey]);
       }
     }
 
@@ -228,7 +246,7 @@ export function cleanDataset(
     }
     if (index.closureProbability) {
       const key = index.closureProbability;
-      const missing = cleaned.filter((r) => !r[key] || r[key]!.trim() === "").length;
+      const missing = cleaned.filter((r) => isBlank(r[key])).length;
       if (missing > 0) {
         warnings.push({
           field: "closureProbability",
@@ -255,9 +273,7 @@ export function cleanDataset(
     }
     const billingStatusKey = index.billingStatus ?? index.collectionStatus;
     if (billingStatusKey) {
-      const missing = cleaned.filter(
-        (r) => !r[billingStatusKey] || r[billingStatusKey]!.trim() === ""
-      ).length;
+      const missing = cleaned.filter((r) => isBlank(r[billingStatusKey])).length;
       if (missing > 0) {
         warnings.push({
           field: "billingStatus",

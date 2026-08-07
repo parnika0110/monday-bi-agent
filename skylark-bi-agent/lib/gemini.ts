@@ -1,4 +1,5 @@
 const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models";
+const REQUEST_TIMEOUT_MS = 15000;
 
 export class GeminiApiError extends Error {
   constructor(message: string) {
@@ -29,44 +30,54 @@ Rules:
 - Write like a sharp business analyst briefing a founder: direct, concise, confident. Not like a chatbot repeating JSON.
 - Lead with the headline answer, then supporting detail, then (if relevant) a risk or recommendation.
 - Use Indian Rupee formatting (₹) and lakh/crore only if it reads naturally; otherwise plain numbers with commas are fine.
-- Keep responses to 120-220 words unless the user asked for a leadership update, which can run longer with clear sections.
+- Keep responses to 120-220 words unless the user asked for a leadership update or a report-style answer (risks, data quality, forecast), which can run longer with clear sections.
+- You may use light markdown - **bold** for key figures, short bullet lists, and a "|" table only when comparing several rows of numbers (e.g. sector breakdowns). Don't overuse headings for short answers.
 - If the DATA section shows a data-quality warning (missing values, etc.), mention it briefly and factor it into your confidence, but don't dwell on it.
 - Do not mention Monday.com's internal mechanics, column names, or that you are an AI model. Just answer as an analyst would.`;
 
-export async function generateAnalystResponse(
-  userQuestion: string,
-  dataSummary: string
+const LEADERSHIP_STYLE_GUIDANCE: Record<string, string> = {
+  ceo: "Write this as a 1-on-1 briefing to the CEO: blunt, prioritized, lead with the single most important number or risk, skip pleasantries.",
+  board: "Write this as a board-meeting update: formal tone, clearly labeled sections (Pipeline, Revenue, Risks, Recommendations), suitable for reading aloud in a meeting.",
+  weekly: "Write this as a routine weekly leadership update: concise, scannable, comparable week-to-week, light on narrative.",
+  standard: "Write this as a standard executive summary with clear sections.",
+};
+
+async function callGeminiOnce(
+  prompt: string,
+  key: string,
+  model: string
 ): Promise<string> {
-  const key = getKey();
-  const model = getModel();
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
   const body = {
-    contents: [
-      {
-        role: "user",
-        parts: [
-          {
-            text: `${SYSTEM_PREAMBLE}\n\nQUESTION:\n${userQuestion}\n\nDATA:\n${dataSummary}\n\nWrite the analyst response now.`,
-          },
-        ],
-      },
-    ],
-    generationConfig: {
-      temperature: 0.4,
-      maxOutputTokens: 1024,
-    },
+    contents: [{ role: "user", parts: [{ text: prompt }] }],
+    generationConfig: { temperature: 0.4, maxOutputTokens: 1536 },
   };
 
   let response: Response;
   try {
-    response = await fetch(`${GEMINI_API_URL}/${model}:generateContent?key=${key}`, {
+    response = await fetch(`${GEMINI_API_URL}/${model}:generateContent`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        // Header-based auth instead of a `?key=` query param, which can end
+        // up logged by proxies/CDNs/error trackers.
+        "x-goog-api-key": key,
+      },
       body: JSON.stringify(body),
       cache: "no-store",
+      signal: controller.signal,
     });
   } catch (err) {
-    throw new GeminiApiError(`Could not reach Gemini API: ${(err as Error).message}`);
+    const isTimeout = (err as Error).name === "AbortError";
+    throw new GeminiApiError(
+      isTimeout
+        ? `Gemini API did not respond within ${REQUEST_TIMEOUT_MS / 1000}s.`
+        : `Could not reach Gemini API: ${(err as Error).message}`
+    );
+  } finally {
+    clearTimeout(timeout);
   }
 
   if (!response.ok) {
@@ -84,4 +95,26 @@ export async function generateAnalystResponse(
   }
 
   return text.trim();
+}
+
+export async function generateAnalystResponse(
+  userQuestion: string,
+  dataSummary: string,
+  leadershipStyle?: string
+): Promise<string> {
+  const key = getKey();
+  const model = getModel();
+
+  const styleNote = leadershipStyle ? `\n\nSTYLE:\n${LEADERSHIP_STYLE_GUIDANCE[leadershipStyle] ?? ""}` : "";
+  const prompt = `${SYSTEM_PREAMBLE}${styleNote}\n\nQUESTION:\n${userQuestion}\n\nDATA:\n${dataSummary}\n\nWrite the analyst response now.`;
+
+  try {
+    return await callGeminiOnce(prompt, key, model);
+  } catch (err) {
+    // One retry for transient failures (timeout / network / 5xx). A 4xx from
+    // a malformed key or bad request won't be fixed by retrying, but Gemini
+    // doesn't give us a clean way to distinguish that from a 5xx here without
+    // parsing its error body, so a single cheap retry is a safe default.
+    return await callGeminiOnce(prompt, key, model);
+  }
 }

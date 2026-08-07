@@ -2,6 +2,7 @@ import { MondayBoard, MondayItem, FlatRecord, BoardType } from "./types";
 
 const MONDAY_API_URL = "https://api.monday.com/v2";
 const ITEMS_PAGE_SIZE = 100;
+const REQUEST_TIMEOUT_MS = 8000;
 
 export class MondayApiError extends Error {
   constructor(message: string, public status?: number) {
@@ -20,11 +21,13 @@ function getToken(): string {
   return token;
 }
 
-async function mondayFetch<T>(
+async function mondayFetchOnce<T>(
   query: string,
-  variables: Record<string, unknown> = {}
+  variables: Record<string, unknown>,
+  token: string
 ): Promise<T> {
-  const token = getToken();
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
   let response: Response;
   try {
@@ -39,13 +42,17 @@ async function mondayFetch<T>(
       // Monday boards are business data that changes over the course of a
       // day - avoid Next.js caching stale results.
       cache: "no-store",
+      signal: controller.signal,
     });
   } catch (err) {
+    const isTimeout = (err as Error).name === "AbortError";
     throw new MondayApiError(
-      `Could not reach Monday.com API. Check your network connection. (${
-        (err as Error).message
-      })`
+      isTimeout
+        ? `Monday.com API did not respond within ${REQUEST_TIMEOUT_MS / 1000}s.`
+        : `Could not reach Monday.com API. Check your network connection. (${(err as Error).message})`
     );
+  } finally {
+    clearTimeout(timeout);
   }
 
   if (response.status === 401 || response.status === 403) {
@@ -73,6 +80,26 @@ async function mondayFetch<T>(
 }
 
 /**
+ * Runs a Monday.com GraphQL query, retrying once on transient failures
+ * (network errors, timeouts, 5xx). Auth errors (401/403) and GraphQL-level
+ * errors are not retried since a second attempt won't change the outcome.
+ */
+async function mondayFetch<T>(
+  query: string,
+  variables: Record<string, unknown> = {}
+): Promise<T> {
+  const token = getToken();
+  try {
+    return await mondayFetchOnce<T>(query, variables, token);
+  } catch (err) {
+    const isAuthError = err instanceof MondayApiError && (err.status === 401 || err.status === 403);
+    if (isAuthError) throw err;
+    // One retry for anything else (network blip, timeout, transient 5xx).
+    return await mondayFetchOnce<T>(query, variables, token);
+  }
+}
+
+/**
  * Discover every board the token has access to (name + id).
  * We never hardcode board IDs - the agent figures out which
  * board is "the deal funnel" vs "the work order tracker" from
@@ -89,6 +116,35 @@ export async function listBoards(): Promise<{ id: string; name: string }[]> {
   `;
   const data = await mondayFetch<{ boards: { id: string; name: string }[] }>(query);
   return data.boards ?? [];
+}
+
+/**
+ * Cheap board discovery: fetches id, name, and column titles only - no
+ * items. Monday.com exposes `columns` directly on a board without needing
+ * to page through items, so this is a single fast request that lets us
+ * decide *which* boards are worth a full item fetch before paying for one.
+ */
+export async function listBoardsWithColumns(): Promise<
+  { id: string; name: string; columnTitles: string[] }[]
+> {
+  const query = `
+    query {
+      boards (limit: 100) {
+        id
+        name
+        columns { title }
+      }
+    }
+  `;
+  const data = await mondayFetch<{
+    boards: { id: string; name: string; columns: { title: string }[] }[];
+  }>(query);
+
+  return (data.boards ?? []).map((b) => ({
+    id: b.id,
+    name: b.name,
+    columnTitles: b.columns.map((c) => c.title),
+  }));
 }
 
 /**
@@ -238,33 +294,42 @@ export function detectBoardType(columnTitles: string[]): BoardType {
 /**
  * High level entry point used by the API route: discover all boards,
  * fetch + flatten each one, and classify it. Boards that don't match
- * a known shape are still returned (as "unknown") so nothing is silently
- * dropped.
+ * a known shape are skipped so nothing irrelevant is fetched or returned.
+ *
+ * @param onlyTypes - optional filter (e.g. ["deal_funnel"]) so a question
+ *   that only needs the pipeline board doesn't pay for a work-order-tracker
+ *   fetch it won't use. Omit to fetch every recognized board (used for
+ *   SECTOR / LEADERSHIP_UPDATE / etc. which need both).
  */
-export async function fetchAllBusinessBoards(): Promise<
-  { boardType: BoardType; boardName: string; records: FlatRecord[] }[]
-> {
-  const boards = await listBoards();
+export async function fetchAllBusinessBoards(
+  onlyTypes?: BoardType[]
+): Promise<{ boardType: BoardType; boardName: string; records: FlatRecord[] }[]> {
+  const boardSummaries = await listBoardsWithColumns();
 
-  if (boards.length === 0) {
+  if (boardSummaries.length === 0) {
+    throw new MondayApiError("No boards were found for this Monday.com account/token.");
+  }
+
+  // Cheap classification pass - no items fetched yet.
+  const candidates = boardSummaries
+    .map((b) => ({ ...b, boardType: detectBoardType(b.columnTitles) }))
+    .filter((b) => b.boardType !== "unknown")
+    .filter((b) => !onlyTypes || onlyTypes.includes(b.boardType));
+
+  if (candidates.length === 0) {
     throw new MondayApiError(
-      "No boards were found for this Monday.com account/token."
+      "Found boards, but none matched the expected 'Deal Funnel' or 'Work Order Tracker' shape. Check that the columns were imported with their original titles."
     );
   }
 
+  // Only now do we pay for a full items fetch, and only for boards that matter.
   const results: { boardType: BoardType; boardName: string; records: FlatRecord[] }[] = [];
-
-  for (const b of boards) {
-    const fullBoard = await fetchBoardWithItems(b.id);
+  for (const candidate of candidates) {
+    const fullBoard = await fetchBoardWithItems(candidate.id);
     if (fullBoard.items.length === 0) continue;
 
-    const columnTitles = fullBoard.items[0].column_values.map((c) => c.title);
-    const boardType = detectBoardType(columnTitles);
-
-    if (boardType === "unknown") continue; // ignore boards unrelated to this agent
-
     results.push({
-      boardType,
+      boardType: candidate.boardType,
       boardName: fullBoard.name,
       records: flattenBoard(fullBoard),
     });
@@ -272,7 +337,7 @@ export async function fetchAllBusinessBoards(): Promise<
 
   if (results.length === 0) {
     throw new MondayApiError(
-      "Found boards, but none matched the expected 'Deal Funnel' or 'Work Order Tracker' shape. Check that the columns were imported with their original titles."
+      "Matching boards were found but contained no items to analyze."
     );
   }
 
