@@ -11,7 +11,7 @@ export class GeminiApiError extends Error {
 }
 
 function getModel(): string {
-  return process.env.GEMINI_MODEL || "gemini-2.5-flash";
+  return process.env.GEMINI_MODEL || "gemini-flash-latest";
 }
 
 function getKey(): string {
@@ -122,7 +122,7 @@ export async function generateAnalystResponse(
   const prompt = `${SYSTEM_PREAMBLE}${styleNote}\n\nQUESTION:\n${userQuestion}\n\nDATA:\n${dataSummary}\n\nWrite the analyst response now.`;
 
   const candidateModels = Array.from(
-    new Set([primaryModel, "gemini-2.5-flash", "gemini-flash-latest", "gemini-2.0-flash-lite", "gemini-2.0-flash"])
+    new Set([primaryModel, "gemini-flash-latest", "gemini-2.0-flash", "gemini-2.0-flash-lite", "gemini-2.5-flash"])
   );
 
   let lastError: unknown;
