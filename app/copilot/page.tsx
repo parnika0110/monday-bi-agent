@@ -63,7 +63,18 @@ export default function CopilotPage() {
         body: JSON.stringify({ message: trimmed }),
       });
 
-      const data = await res.json();
+      const responseText = await res.text();
+      let data: any = {};
+      try {
+        data = JSON.parse(responseText);
+      } catch {
+        throw new Error(
+          res.ok
+            ? "Server returned invalid response."
+            : `Server error (${res.status}): ${responseText.slice(0, 150)}`
+        );
+      }
+
       if (!res.ok) throw new Error(data?.error || "Failed to generate response.");
 
       const assistantMessage = {

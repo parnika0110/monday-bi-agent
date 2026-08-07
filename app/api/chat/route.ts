@@ -121,13 +121,14 @@ function fallbackNarrative(dataSummary: string, errorStatus?: number, errorMessa
 }
 
 export async function POST(req: NextRequest) {
-  const userGeminiKey = req.headers.get("x-user-gemini-key") || undefined;
-  let body: { message?: string };
   try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
-  }
+    const userGeminiKey = req.headers.get("x-user-gemini-key") || undefined;
+    let body: { message?: string };
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
+    }
 
   const question = body.message?.trim();
   if (!question) {
@@ -348,5 +349,12 @@ export async function POST(req: NextRequest) {
     warnings: allWarnings,
   };
 
-  return NextResponse.json(response);
+    return NextResponse.json(response);
+  } catch (globalErr) {
+    console.error("Global error in POST /api/chat:", globalErr);
+    return NextResponse.json(
+      { error: (globalErr as Error).message || "An unexpected server error occurred." },
+      { status: 500 }
+    );
+  }
 }
