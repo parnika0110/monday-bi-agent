@@ -107,10 +107,15 @@ function buildLeadershipDataSummary(snapshot: LeadershipSnapshot): string {
 }
 
 /** Deterministic fallback used if Gemini is unavailable, so the agent never hard-fails. */
-function fallbackNarrative(dataSummary: string, errorStatus?: number): string {
-  const note = errorStatus === 429
-    ? `*(Note: Google Gemini API free-tier rate limit reached [15 requests/min]. AI narration will resume automatically in ~30 seconds.)*`
-    : `*(Note: To enable Google Gemini AI analyst narration, ensure a valid Google AI Studio API Key starting with AIzaSy... is set in Platform Settings or Vercel Environment Variables)*`;
+function fallbackNarrative(dataSummary: string, errorStatus?: number, errorMessage?: string): string {
+  let note = "";
+  if (errorStatus === 429) {
+    note = `*(Note: Google Gemini API free-tier rate limit reached [15 requests/min]. AI narration will resume automatically in ~30 seconds.)*`;
+  } else if (errorMessage) {
+    note = `*(Note: Gemini API call failed [${errorMessage.slice(0, 150)}]. Verify API Key in Platform Settings or Vercel Environment Variables.)*`;
+  } else {
+    note = `*(Note: To enable Google Gemini AI analyst narration, ensure a valid Google AI Studio API Key starting with AIzaSy... is set in Platform Settings or Vercel Environment Variables)*`;
+  }
 
   return `Here's what the data shows (AI summarization is temporarily unavailable, so this is the raw analysis):\n\n${dataSummary}\n\n${note}`;
 }
@@ -332,12 +337,9 @@ export async function POST(req: NextRequest) {
     // AI summarization layer is down - the underlying analysis is still
     // valuable to a founder.
     const status = err instanceof GeminiApiError ? err.status : undefined;
-    answer = fallbackNarrative(dataSummary, status);
-    if (err instanceof GeminiApiError) {
-      console.error("Gemini generation failed:", err.message);
-    } else {
-      console.error("Unexpected Gemini error:", err);
-    }
+    const msg = err instanceof Error ? err.message : String(err);
+    answer = fallbackNarrative(dataSummary, status, msg);
+    console.error("Gemini generation failed:", msg);
   }
 
   const response: ChatApiResponse = {
