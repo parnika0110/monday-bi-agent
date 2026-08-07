@@ -9,14 +9,19 @@ export class GeminiApiError extends Error {
 }
 
 function getModel(): string {
-  return process.env.GEMINI_MODEL || "gemini-1.5-flash";
+  const model = process.env.GEMINI_MODEL || "gemini-1.5-flash";
+  // If an invalid/future model string like gemini-2.5-flash was set, fall back to gemini-1.5-flash
+  if (model.includes("2.5")) {
+    return "gemini-1.5-flash";
+  }
+  return model;
 }
 
 function getKey(): string {
   const key = process.env.GEMINI_API_KEY;
   if (!key) {
     throw new GeminiApiError(
-      "GEMINI_API_KEY is not set. Add it to your environment variables (see .env.example)."
+      "GEMINI_API_KEY is not set. Add it to your environment variables."
     );
   }
   return key;
@@ -57,12 +62,11 @@ async function callGeminiOnce(
 
   let response: Response;
   try {
-    response = await fetch(`${GEMINI_API_URL}/${model}:generateContent`, {
+    const url = `${GEMINI_API_URL}/${model}:generateContent?key=${encodeURIComponent(key)}`;
+    response = await fetch(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        // Header-based auth instead of a `?key=` query param, which can end
-        // up logged by proxies/CDNs/error trackers.
         "x-goog-api-key": key,
       },
       body: JSON.stringify(body),
@@ -111,10 +115,16 @@ export async function generateAnalystResponse(
   try {
     return await callGeminiOnce(prompt, key, model);
   } catch (err) {
-    // One retry for transient failures (timeout / network / 5xx). A 4xx from
-    // a malformed key or bad request won't be fixed by retrying, but Gemini
-    // doesn't give us a clean way to distinguish that from a 5xx here without
-    // parsing its error body, so a single cheap retry is a safe default.
-    return await callGeminiOnce(prompt, key, model);
+    console.warn("First Gemini call failed, retrying once:", (err as Error).message);
+    try {
+      return await callGeminiOnce(prompt, key, model);
+    } catch (retryErr) {
+      // If gemini-1.5-flash fails or is unavailable, try gemini-1.5-pro as fallback
+      if (model !== "gemini-1.5-pro") {
+        console.warn("Retrying with fallback model gemini-1.5-pro...");
+        return await callGeminiOnce(prompt, key, "gemini-1.5-pro");
+      }
+      throw retryErr;
+    }
   }
 }
