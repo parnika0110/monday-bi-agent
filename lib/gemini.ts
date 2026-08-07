@@ -9,12 +9,7 @@ export class GeminiApiError extends Error {
 }
 
 function getModel(): string {
-  const model = process.env.GEMINI_MODEL || "gemini-1.5-flash";
-  // If an invalid/future model string like gemini-2.5-flash was set, fall back to gemini-1.5-flash
-  if (model.includes("2.5")) {
-    return "gemini-1.5-flash";
-  }
-  return model;
+  return process.env.GEMINI_MODEL || "gemini-2.5-flash";
 }
 
 function getKey(): string {
@@ -116,14 +111,10 @@ export async function generateAnalystResponse(
   try {
     return await callGeminiOnce(prompt, key, model);
   } catch (err) {
-    console.warn("First Gemini call failed, retrying once:", (err as Error).message);
+    console.warn("First Gemini call failed, retrying with gemini-flash-latest:", (err as Error).message);
     try {
-      return await callGeminiOnce(prompt, key, model);
+      return await callGeminiOnce(prompt, key, "gemini-flash-latest");
     } catch (retryErr) {
-      if (model !== "gemini-1.5-pro") {
-        console.warn("Retrying with fallback model gemini-1.5-pro...");
-        return await callGeminiOnce(prompt, key, "gemini-1.5-pro");
-      }
       throw retryErr;
     }
   }
