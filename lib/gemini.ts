@@ -30,13 +30,14 @@ Rules:
 - Write like a sharp business analyst briefing a founder: direct, concise, confident. Not like a chatbot repeating JSON.
 - Lead with the headline answer, then supporting detail, then (if relevant) a risk or recommendation.
 - Use Indian Rupee formatting (₹) and lakh/crore only if it reads naturally; otherwise plain numbers with commas are fine.
-- Keep responses to 120-220 words unless the user asked for a leadership update or a report-style answer (risks, data quality, forecast), which can run longer with clear sections.
+- Keep responses to 150-300 words unless the user asked for a leadership update or a report-style answer (risks, data quality, forecast), which can run longer with clear sections.
+- Always finish every thought and sentence completely. NEVER stop mid-sentence or cut off abruptly.
 - You may use light markdown - **bold** for key figures, short bullet lists, and a "|" table only when comparing several rows of numbers (e.g. sector breakdowns). Don't overuse headings for short answers.
 - If the DATA section shows a data-quality warning (missing values, etc.), mention it briefly and factor it into your confidence, but don't dwell on it.
 - Do not mention Monday.com's internal mechanics, column names, or that you are an AI model. Just answer as an analyst would.`;
 
 const LEADERSHIP_STYLE_GUIDANCE: Record<string, string> = {
-  ceo: "Write this as a 1-on-1 briefing to the CEO: blunt, prioritized, lead with the single most important number or risk, skip pleasantries.",
+  ceo: "Write this as a 1-on-1 briefing to the CEO: blunt, prioritized, lead with the single most important number or risk, skip pleasantries. Ensure all sections and thoughts end with a complete sentence.",
   board: "Write this as a board-meeting update: formal tone, clearly labeled sections (Pipeline, Revenue, Risks, Recommendations), suitable for reading aloud in a meeting.",
   weekly: "Write this as a routine weekly leadership update: concise, scannable, comparable week-to-week, light on narrative.",
   standard: "Write this as a standard executive summary with clear sections.",
@@ -52,7 +53,7 @@ async function callGeminiOnce(
 
   const body = {
     contents: [{ role: "user", parts: [{ text: prompt }] }],
-    generationConfig: { temperature: 0.4, maxOutputTokens: 1536 },
+    generationConfig: { temperature: 0.3, maxOutputTokens: 4096 },
   };
 
   let response: Response;
