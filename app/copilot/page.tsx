@@ -22,14 +22,18 @@ export default function CopilotPage() {
   const [error, setError] = useState<string | null>(null);
   const [lastWarnings, setLastWarnings] = useState<DataQualityWarning[]>([]);
 
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
+  const userMsgRef = useRef<HTMLDivElement>(null);
 
   const messages = active?.messages ?? [];
   const hasUserMessages = messages.some((m) => m.role === "user");
 
+  // Scroll smoothly when new messages are added, keeping the user question in view
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, loading]);
+    if (loading && userMsgRef.current) {
+      userMsgRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [loading, messages.length]);
 
   async function handleSend(text: string) {
     const trimmed = text.trim();
@@ -121,8 +125,11 @@ export default function CopilotPage() {
           </div>
           <div className="min-w-0">
             <h1 className="truncate text-xs font-bold text-slate-900 dark:text-white">
-              {active?.title || "AI Copilot Session"}
+              Skylark AI Copilot
             </h1>
+            <p className="truncate text-[10px] text-slate-400">
+              {active?.title && active.title !== "New conversation" ? active.title : "Live Monday.com Intelligence"}
+            </p>
           </div>
         </div>
 
@@ -161,10 +168,10 @@ export default function CopilotPage() {
       </div>
 
       {/* Main Chat / Empty State Container */}
-      <div className="flex-1 overflow-y-auto px-4 py-6 sm:px-6">
+      <div ref={chatContainerRef} className="flex-1 overflow-y-auto px-4 py-6 sm:px-6">
         <div className="mx-auto max-w-3xl">
           {!hasUserMessages ? (
-            /* Centered Minimalist Empty State (ChatGPT / Claude Inspired) */
+            /* Centered Minimalist Empty State */
             <div className="flex flex-col items-center justify-center py-16 text-center">
               <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl border border-slate-200/80 bg-slate-50 text-slate-900 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 shadow-2xs">
                 <Sparkles size={22} className="text-slate-800 dark:text-slate-200" />
@@ -183,16 +190,20 @@ export default function CopilotPage() {
             </div>
           ) : (
             /* Messages List */
-            <div className="space-y-4">
-              {messages.map((m, idx) => (
-                <ChatMessageView
-                  key={m.id}
-                  message={m}
-                  warnings={m.role === "assistant" ? lastWarnings : []}
-                  onRegenerate={handleRegenerateLast}
-                  isLastAssistant={idx === messages.length - 1 && m.role === "assistant"}
-                />
-              ))}
+            <div className="space-y-6">
+              {messages.map((m, idx) => {
+                const isLastUser = m.role === "user" && idx === messages.findLastIndex((msg) => msg.role === "user");
+                return (
+                  <div key={m.id} ref={isLastUser ? userMsgRef : undefined}>
+                    <ChatMessageView
+                      message={m}
+                      warnings={m.role === "assistant" ? lastWarnings : []}
+                      onRegenerate={handleRegenerateLast}
+                      isLastAssistant={idx === messages.length - 1 && m.role === "assistant"}
+                    />
+                  </div>
+                );
+              })}
 
               {/* Minimal Typing Loader */}
               {loading && (
@@ -208,8 +219,6 @@ export default function CopilotPage() {
                   </div>
                 </div>
               )}
-
-              <div ref={messagesEndRef} />
             </div>
           )}
         </div>
