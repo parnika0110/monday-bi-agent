@@ -1,5 +1,5 @@
 const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models";
-const REQUEST_TIMEOUT_MS = 15000;
+const REQUEST_TIMEOUT_MS = 45000;
 
 export class GeminiApiError extends Error {
   constructor(message: string) {

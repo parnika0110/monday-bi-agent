@@ -23,6 +23,7 @@ import { generateAnalystResponse, GeminiApiError } from "@/lib/gemini";
 import { ChatApiResponse, CleanedDataset, DataQualityWarning } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
 function formatCurrency(n: number): string {
   return "₹" + Math.round(n).toLocaleString("en-IN");
