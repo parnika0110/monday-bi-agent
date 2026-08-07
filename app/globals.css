@@ -5,45 +5,43 @@
 html,
 body {
   height: 100%;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
 }
 
 body {
-  background-image: linear-gradient(
-    to bottom,
-    theme("colors.slate.50"),
-    theme("colors.slate.100")
-  );
+  background-color: #f8fafc;
+  color: #0f172a;
 }
 
 .dark body {
-  background-image: linear-gradient(to bottom, #0b1120, #0a0f1a);
+  background-color: #0b0f17;
+  color: #f8fafc;
 }
 
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: #e2e8f0;
   border-radius: 9999px;
 }
 .dark ::-webkit-scrollbar-thumb {
-  background: #334155;
+  background: #1e293b;
 }
 
 @layer components {
-  .glass-card {
-    @apply rounded-2xl border border-white/60 bg-white/70 shadow-glass backdrop-blur-xl;
-    @apply dark:border-white/10 dark:bg-slate-900/60 dark:shadow-glass-dark;
+  .card-minimal {
+    @apply rounded-xl border border-slate-200/70 bg-white shadow-2xs;
+    @apply dark:border-slate-800/70 dark:bg-[#111622] dark:shadow-none;
   }
 
-  .glass-panel {
-    @apply rounded-2xl border border-slate-200/80 bg-white/80 backdrop-blur-xl;
-    @apply dark:border-slate-800/80 dark:bg-slate-900/70;
+  .subtle-border {
+    @apply border border-slate-200/70 dark:border-slate-800/70;
   }
 
   .skeleton {
-    @apply relative overflow-hidden rounded-lg bg-slate-200/70 dark:bg-slate-800/70;
+    @apply relative overflow-hidden rounded-lg bg-slate-100 dark:bg-slate-800/50;
   }
   .skeleton::after {
     content: "";
@@ -52,7 +50,7 @@ body {
     background-image: linear-gradient(
       90deg,
       transparent,
-      rgba(255, 255, 255, 0.55),
+      rgba(255, 255, 255, 0.6),
       transparent
     );
     background-size: 400px 100%;
@@ -62,22 +60,25 @@ body {
     background-image: linear-gradient(
       90deg,
       transparent,
-      rgba(255, 255, 255, 0.08),
+      rgba(255, 255, 255, 0.05),
       transparent
     );
   }
 }
 
-/* Recharts tooltip/legend dark-mode friendly overrides */
+/* Recharts tooltip/legend overrides */
 .recharts-default-tooltip {
-  border-radius: 12px !important;
+  border-radius: 10px !important;
   border: 1px solid theme("colors.slate.200") !important;
   background: white !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05) !important;
+  padding: 8px 12px !important;
 }
 .dark .recharts-default-tooltip {
-  border: 1px solid theme("colors.slate.700") !important;
-  background: theme("colors.slate.900") !important;
+  border: 1px solid theme("colors.slate.800") !important;
+  background: #111622 !important;
   color: theme("colors.slate.100") !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4) !important;
 }
 .dark .recharts-text {
   fill: theme("colors.slate.400");
@@ -85,4 +86,5 @@ body {
 .dark .recharts-cartesian-grid-horizontal line,
 .dark .recharts-cartesian-grid-vertical line {
   stroke: theme("colors.slate.800");
+  stroke-opacity: 0.5;
 }

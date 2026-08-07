@@ -6,7 +6,7 @@ import { ChatMessageView } from "@/components/ChatMessageView";
 import { QuickActions } from "@/components/QuickActions";
 import { DataQualityWarning } from "@/lib/types";
 import { exportChatToPdf } from "@/lib/export";
-import { Send, Download, Sparkles, RefreshCw, Bot, Trash2, Plus } from "lucide-react";
+import { Send, Download, RefreshCw, Bot, Trash2, Plus, Sparkles } from "lucide-react";
 
 export default function CopilotPage() {
   const {
@@ -24,9 +24,12 @@ export default function CopilotPage() {
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  const messages = active?.messages ?? [];
+  const hasUserMessages = messages.some((m) => m.role === "user");
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [active?.messages, loading]);
+  }, [messages, loading]);
 
   async function handleSend(text: string) {
     const trimmed = text.trim();
@@ -82,6 +85,16 @@ export default function CopilotPage() {
     }
   }
 
+  function handleRegenerateLast() {
+    if (!active || loading) return;
+    const lastUserIndex = [...active.messages].reverse().findIndex((m) => m.role === "user");
+    if (lastUserIndex !== -1) {
+      const actualIndex = active.messages.length - 1 - lastUserIndex;
+      const lastUserMsg = active.messages[actualIndex];
+      handleSend(lastUserMsg.content);
+    }
+  }
+
   function handleExportPdf() {
     if (!active) return;
     exportChatToPdf(active.title, active.messages);
@@ -90,102 +103,126 @@ export default function CopilotPage() {
   if (!hydrated) {
     return (
       <div className="flex h-96 items-center justify-center">
-        <div className="flex items-center gap-2 text-slate-500">
-          <RefreshCw className="animate-spin text-brand-500" size={20} />
-          <span>Loading Copilot session...</span>
+        <div className="flex items-center gap-2 text-slate-400">
+          <RefreshCw className="animate-spin" size={18} />
+          <span className="text-xs">Loading Copilot session...</span>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex h-[calc(100vh-6.5rem)] flex-col rounded-2xl border border-slate-200/80 bg-white/60 shadow-xs backdrop-blur-xl dark:border-slate-800/80 dark:bg-slate-900/60">
+    <div className="flex h-[calc(100vh-6rem)] flex-col rounded-xl border border-slate-200/70 bg-white shadow-2xs dark:border-slate-800/70 dark:bg-[#111622]">
       {/* Header bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200/80 px-6 py-4 dark:border-slate-800">
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-brand-600 to-indigo-600 font-bold text-white shadow-md shadow-brand-500/20">
-            <Bot size={20} />
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200/70 px-5 py-3 dark:border-slate-800/70">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 font-bold text-xs">
+            <Bot size={15} />
           </div>
           <div className="min-w-0">
-            <h1 className="truncate text-base font-bold text-slate-900 dark:text-white">
+            <h1 className="truncate text-xs font-bold text-slate-900 dark:text-white">
               {active?.title || "AI Copilot Session"}
             </h1>
-            <p className="truncate text-xs text-slate-500 dark:text-slate-400">
-              Live queries against Monday.com Deal Funnel &amp; Work Order Tracker
-            </p>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
           <button
             onClick={() => createConversation()}
-            className="flex items-center gap-1.5 rounded-xl bg-brand-600 px-3 py-1.5 text-xs font-semibold text-white shadow-xs transition hover:bg-brand-700 active:scale-95"
+            className="flex items-center gap-1.5 rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-slate-800 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-200"
             title="Start new conversation"
           >
-            <Plus size={14} />
+            <Plus size={13} />
             <span>New Chat</span>
           </button>
 
-          <button
-            onClick={clearCurrentConversation}
-            className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 shadow-2xs transition hover:bg-slate-100 hover:text-red-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-red-400"
-            title="Reset current conversation"
-          >
-            <Trash2 size={13} />
-            <span>Clear Chat</span>
-          </button>
+          {hasUserMessages && (
+            <button
+              onClick={clearCurrentConversation}
+              className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-600 transition hover:bg-slate-50 hover:text-red-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-slate-800"
+              title="Reset current conversation"
+            >
+              <Trash2 size={13} />
+              <span className="hidden sm:inline">Clear</span>
+            </button>
+          )}
 
-          {active && active.messages.length > 1 && (
+          {hasUserMessages && (
             <button
               onClick={handleExportPdf}
-              className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-2xs transition hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300"
+              className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-600 transition hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400"
               title="Export conversation to PDF"
             >
-              <Download size={14} />
-              <span>Export PDF</span>
+              <Download size={13} />
+              <span className="hidden sm:inline">PDF</span>
             </button>
           )}
         </div>
       </div>
 
-      {/* Messages Scroll Area */}
-      <div className="flex-1 overflow-y-auto px-6 py-4">
-        <div className="mx-auto max-w-4xl space-y-4">
-          {active?.messages.map((m) => (
-            <ChatMessageView key={m.id} message={m} warnings={m.role === "assistant" ? lastWarnings : []} />
-          ))}
-
-          {/* Thinking Skeleton Loader */}
-          {loading && (
-            <div className="flex items-start gap-3 py-3">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-brand-600 to-indigo-600 text-white shadow-md">
-                <Sparkles size={18} className="animate-spin" />
+      {/* Main Chat / Empty State Container */}
+      <div className="flex-1 overflow-y-auto px-4 py-6 sm:px-6">
+        <div className="mx-auto max-w-3xl">
+          {!hasUserMessages ? (
+            /* Centered Minimalist Empty State (ChatGPT / Claude Inspired) */
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl border border-slate-200/80 bg-slate-50 text-slate-900 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 shadow-2xs">
+                <Sparkles size={22} className="text-slate-800 dark:text-slate-200" />
               </div>
-              <div className="w-full max-w-lg rounded-2xl border border-slate-200/80 bg-white/90 p-4 shadow-xs dark:border-slate-800 dark:bg-slate-900/90">
-                <div className="flex items-center gap-2 text-xs font-medium text-brand-600 dark:text-brand-400">
-                  <span className="relative flex h-2 w-2">
-                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand-400 opacity-75"></span>
-                    <span className="relative inline-flex h-2 w-2 rounded-full bg-brand-500"></span>
-                  </span>
-                  <span>Analyzing live board data...</span>
-                </div>
-                <div className="mt-3 space-y-2">
-                  <div className="h-3.5 w-3/4 rounded bg-slate-200/80 dark:bg-slate-800 animate-pulse" />
-                  <div className="h-3.5 w-full rounded bg-slate-200/80 dark:bg-slate-800 animate-pulse" />
-                  <div className="h-3.5 w-5/6 rounded bg-slate-200/80 dark:bg-slate-800 animate-pulse" />
-                </div>
+
+              <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+                Skylark AI Copilot
+              </h2>
+              <p className="mt-2 max-w-md text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+                Ask questions about pipeline performance, revenue, sectors, forecasting, and operational insights.
+              </p>
+
+              <div className="mt-8 w-full max-w-xl">
+                <QuickActions onSelectPrompt={handleSend} disabled={loading} />
               </div>
             </div>
-          )}
+          ) : (
+            /* Messages List */
+            <div className="space-y-4">
+              {messages.map((m, idx) => (
+                <ChatMessageView
+                  key={m.id}
+                  message={m}
+                  warnings={m.role === "assistant" ? lastWarnings : []}
+                  onRegenerate={handleRegenerateLast}
+                  isLastAssistant={idx === messages.length - 1 && m.role === "assistant"}
+                />
+              ))}
 
-          <div ref={messagesEndRef} />
+              {/* Minimal Typing Loader */}
+              {loading && (
+                <div className="flex items-start gap-3 py-4">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900">
+                    <Sparkles size={15} className="animate-spin" />
+                  </div>
+                  <div className="flex items-center gap-2 rounded-xl border border-slate-200/70 bg-slate-50 px-4 py-3 text-xs font-medium text-slate-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400">
+                    <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-slate-400" />
+                    <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-slate-400 [animation-delay:0.2s]" />
+                    <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-slate-400 [animation-delay:0.4s]" />
+                    <span className="ml-1 text-slate-500">Analyzing live Monday.com board data...</span>
+                  </div>
+                </div>
+              )}
+
+              <div ref={messagesEndRef} />
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Input Area */}
-      <div className="border-t border-slate-200/80 bg-white/80 p-4 backdrop-blur-xl dark:border-slate-800 dark:bg-slate-950/80">
-        <div className="mx-auto max-w-4xl">
-          <QuickActions onSelectPrompt={handleSend} disabled={loading} />
+      {/* Floating Chat Input */}
+      <div className="border-t border-slate-200/70 bg-white p-4 dark:border-slate-800/70 dark:bg-[#111622]">
+        <div className="mx-auto max-w-3xl">
+          {hasUserMessages && (
+            <div className="mb-3">
+              <QuickActions onSelectPrompt={handleSend} disabled={loading} />
+            </div>
+          )}
 
           <form
             onSubmit={(e) => {
@@ -205,16 +242,16 @@ export default function CopilotPage() {
               }}
               placeholder="Ask about pipeline value, revenue pending collection, sector performance, or risk analysis..."
               rows={2}
-              className="w-full resize-none rounded-2xl border border-slate-200 bg-white py-3 pl-4 pr-14 text-sm text-slate-900 shadow-inner outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 dark:border-slate-800 dark:bg-slate-900 dark:text-white"
+              className="w-full resize-none rounded-xl border border-slate-200/80 bg-slate-50 py-3 pl-4 pr-12 text-sm text-slate-900 outline-none transition focus:border-slate-400 focus:bg-white focus:ring-1 focus:ring-slate-400 dark:border-slate-800 dark:bg-slate-900 dark:text-white dark:focus:border-slate-600"
             />
 
             <button
               type="submit"
               disabled={loading || !input.trim()}
-              className="absolute right-3 rounded-xl bg-gradient-to-r from-brand-600 to-indigo-600 p-2.5 text-white shadow-sm transition hover:shadow-md hover:shadow-brand-500/20 disabled:cursor-not-allowed disabled:opacity-40"
+              className="absolute right-3 rounded-lg bg-slate-900 p-2 text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-30 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-200"
               title="Send prompt"
             >
-              <Send size={16} />
+              <Send size={15} />
             </button>
           </form>
 

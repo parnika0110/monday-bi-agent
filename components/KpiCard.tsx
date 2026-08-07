@@ -1,91 +1,98 @@
 "use client";
 
-import { useState } from "react";
 import { KpiValue } from "@/lib/types";
-import { formatKpiValue } from "@/lib/format";
-import {
-  HelpCircle,
-  TrendingDown,
-  TrendingUp,
-  Wallet,
-  LineChart,
-  Percent,
-  Layers,
-  Sparkles,
-  ShieldCheck,
-} from "lucide-react";
+import { TrendingUp, TrendingDown, Minus, LucideIcon } from "lucide-react";
 import clsx from "clsx";
 
-const KPI_ICONS: Record<string, typeof Wallet> = {
-  revenue: Wallet,
-  pipeline_value: LineChart,
-  collection_pct: Percent,
-  open_deals: Layers,
-  forecast_revenue: Sparkles,
-  health_score: ShieldCheck,
-};
+interface KpiCardProps {
+  kpi?: KpiValue;
+  title?: string;
+  value?: string | number;
+  subtext?: string;
+  trend?: {
+    direction: "up" | "down" | "neutral";
+    label: string;
+  };
+  icon?: LucideIcon;
+  badge?: string;
+}
 
-const TONE_BADGE: Record<NonNullable<KpiValue["tone"]>, string> = {
-  positive: "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-900/60",
-  negative: "bg-red-50 text-red-700 border-red-200 dark:bg-red-950/50 dark:text-red-300 dark:border-red-900/60",
-  warning: "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-900/60",
-  neutral: "bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700",
-};
+function formatKpiValue(val: number, format: KpiValue["format"]): string {
+  if (format === "currency") {
+    return "₹" + Math.round(val).toLocaleString("en-IN");
+  }
+  if (format === "percent") {
+    return `${Math.round(val * 100)}%`;
+  }
+  if (format === "score") {
+    return `${Math.round(val)}/100`;
+  }
+  return val.toLocaleString("en-IN");
+}
 
-export function KpiCard({ kpi }: { kpi: KpiValue }) {
-  const [showHelp, setShowHelp] = useState(false);
-  const tone = kpi.tone ?? "neutral";
-  const Icon = KPI_ICONS[kpi.id] ?? LineChart;
+export function KpiCard({ kpi, title, value, subtext, trend, icon: Icon, badge }: KpiCardProps) {
+  const displayTitle = title ?? kpi?.label ?? "";
+  const displayValue = value !== undefined 
+    ? (typeof value === "number" ? value.toLocaleString("en-IN") : value)
+    : kpi 
+    ? formatKpiValue(kpi.value, kpi.format)
+    : "";
+  const displaySubtext = subtext ?? kpi?.helpText ?? "";
+
+  const delta = kpi?.delta;
+  const deltaLabel = kpi?.deltaLabel;
 
   return (
-    <div className="group relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white/75 p-5 shadow-xs backdrop-blur-xl transition-all duration-200 hover:-translate-y-1 hover:border-brand-300/50 hover:shadow-lg hover:shadow-brand-500/5 dark:border-slate-800/80 dark:bg-slate-900/60 dark:hover:border-brand-700/50">
-      <div className="flex items-start justify-between">
-        <div className="flex items-center gap-2.5">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-slate-700 group-hover:bg-brand-50 group-hover:text-brand-600 dark:bg-slate-800 dark:text-slate-300 dark:group-hover:bg-brand-950/60 dark:group-hover:text-brand-400 transition-colors">
-            <Icon size={18} />
-          </div>
-          <div>
-            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-              {kpi.label}
-            </p>
-          </div>
+    <div className="rounded-xl border border-slate-200/70 bg-white p-4 shadow-2xs transition-all hover:border-slate-300 dark:border-slate-800/70 dark:bg-[#111622] dark:hover:border-slate-700">
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-xs font-medium text-slate-500 dark:text-slate-400">{displayTitle}</span>
+        {badge ? (
+          <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600 dark:bg-slate-800/80 dark:text-slate-300">
+            {badge}
+          </span>
+        ) : Icon ? (
+          <Icon size={15} className="text-slate-400 dark:text-slate-500" />
+        ) : null}
+      </div>
+
+      <div className="mt-2.5 flex items-baseline justify-between gap-2">
+        <div className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white font-mono">
+          {displayValue}
         </div>
 
-        {kpi.helpText && (
-          <button
-            onMouseEnter={() => setShowHelp(true)}
-            onMouseLeave={() => setShowHelp(false)}
-            className="text-slate-300 transition hover:text-slate-500 dark:text-slate-600 dark:hover:text-slate-400"
-            aria-label="More info"
+        {trend ? (
+          <div
+            className={clsx(
+              "flex items-center gap-1 text-[11px] font-medium",
+              trend.direction === "up" && "text-emerald-600 dark:text-emerald-400",
+              trend.direction === "down" && "text-amber-600 dark:text-amber-400",
+              trend.direction === "neutral" && "text-slate-500 dark:text-slate-400"
+            )}
           >
-            <HelpCircle size={15} />
-          </button>
-        )}
+            {trend.direction === "up" && <TrendingUp size={13} />}
+            {trend.direction === "down" && <TrendingDown size={13} />}
+            {trend.direction === "neutral" && <Minus size={13} />}
+            <span>{trend.label}</span>
+          </div>
+        ) : delta !== undefined && delta !== null ? (
+          <div
+            className={clsx(
+              "flex items-center gap-1 text-[11px] font-medium",
+              delta > 0 && "text-emerald-600 dark:text-emerald-400",
+              delta < 0 && "text-amber-600 dark:text-amber-400",
+              delta === 0 && "text-slate-500 dark:text-slate-400"
+            )}
+          >
+            {delta > 0 ? <TrendingUp size={13} /> : delta < 0 ? <TrendingDown size={13} /> : <Minus size={13} />}
+            <span>{deltaLabel ?? `${delta > 0 ? "+" : ""}${delta}%`}</span>
+          </div>
+        ) : null}
       </div>
 
-      <div className="mt-4 flex items-baseline justify-between gap-2">
-        <p className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white tabular-nums">
-          {formatKpiValue(kpi)}
+      {displaySubtext && (
+        <p className="mt-1 text-[11px] text-slate-400 dark:text-slate-500">
+          {displaySubtext}
         </p>
-
-        <span className={clsx("inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-semibold", TONE_BADGE[tone])}>
-          {tone === "positive" ? (
-            <TrendingUp size={12} />
-          ) : tone === "negative" ? (
-            <TrendingDown size={12} />
-          ) : null}
-          {kpi.id === "health_score"
-            ? `${kpi.value}/100`
-            : kpi.id === "collection_pct"
-            ? `${kpi.value}%`
-            : "Live"}
-        </span>
-      </div>
-
-      {showHelp && kpi.helpText && (
-        <div className="absolute left-4 right-4 top-full z-30 mt-2 rounded-xl border border-slate-200/90 bg-white/95 p-3 text-xs text-slate-600 shadow-xl backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/95 dark:text-slate-300">
-          {kpi.helpText}
-        </div>
       )}
     </div>
   );

@@ -1,7 +1,7 @@
 "use client";
 
 import { useTheme } from "@/components/theme";
-import { Moon, Sun, RefreshCw, CheckCircle2, User, Zap } from "lucide-react";
+import { Moon, Sun, RefreshCw, CheckCircle2 } from "lucide-react";
 import { useState } from "react";
 
 interface TopNavProps {
@@ -16,32 +16,32 @@ export function TopNav({ onRefresh, isRefreshing = false }: TopNavProps) {
   );
 
   return (
-    <header className="sticky top-0 z-30 flex items-center justify-between border-b border-slate-200/80 bg-white/70 px-4 py-3 backdrop-blur-xl dark:border-slate-800/80 dark:bg-slate-950/70 lg:px-6">
+    <header className="sticky top-0 z-30 flex items-center justify-between border-b border-slate-200/70 bg-white/90 px-4 py-2.5 backdrop-blur-md dark:border-slate-800/70 dark:bg-[#0b0f17]/90 lg:px-6">
       <div className="flex items-center gap-3">
-        <div className="flex items-center gap-2 rounded-full border border-emerald-200/80 bg-emerald-50/80 px-3 py-1 text-xs font-medium text-emerald-700 dark:border-emerald-900/50 dark:bg-emerald-950/40 dark:text-emerald-400">
+        <div className="flex items-center gap-2 rounded-full border border-slate-200/80 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-700 dark:border-slate-800 dark:bg-slate-900/60 dark:text-slate-300">
           <span className="relative flex h-2 w-2">
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
             <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500"></span>
           </span>
-          <span className="hidden sm:inline">Monday.com Live Sync</span>
+          <span className="hidden sm:inline">Monday Live Sync</span>
           <span className="sm:hidden">Live</span>
         </div>
 
         <div className="hidden items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 md:flex">
           <CheckCircle2 size={13} className="text-emerald-500" />
-          <span>Boards: Deal Funnel &amp; Work Order Tracker</span>
+          <span>Deal Funnel &amp; Work Order Tracker</span>
         </div>
       </div>
 
-      <div className="flex items-center gap-2.5">
+      <div className="flex items-center gap-2">
         {onRefresh && (
           <button
             onClick={onRefresh}
             disabled={isRefreshing}
-            className="flex items-center gap-1.5 rounded-lg border border-slate-200/80 bg-white/80 px-2.5 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50 active:scale-95 disabled:opacity-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-850"
-            title="Refresh live data"
+            className="flex items-center gap-1.5 rounded-lg border border-slate-200/70 bg-white px-2.5 py-1 text-xs font-medium text-slate-600 transition hover:bg-slate-50 disabled:opacity-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300"
+            title="Refresh data"
           >
-            <RefreshCw size={13} className={isRefreshing ? "animate-spin text-brand-500" : "text-slate-400"} />
+            <RefreshCw size={12} className={isRefreshing ? "animate-spin" : ""} />
             <span className="hidden sm:inline">Sync</span>
           </button>
         )}
@@ -52,19 +52,15 @@ export function TopNav({ onRefresh, isRefreshing = false }: TopNavProps) {
 
         <button
           onClick={toggleTheme}
-          className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition hover:bg-slate-100 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-900"
+          className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200/70 text-slate-500 transition hover:bg-slate-100 dark:border-slate-800 dark:text-slate-400 dark:hover:bg-slate-800"
           aria-label="Toggle dark mode"
         >
-          {theme === "dark" ? <Sun size={15} className="text-amber-400" /> : <Moon size={15} />}
+          {theme === "dark" ? <Sun size={14} className="text-amber-400" /> : <Moon size={14} />}
         </button>
 
-        <div className="flex items-center gap-2 border-l border-slate-200/80 pl-2.5 dark:border-slate-800">
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-tr from-brand-600 to-indigo-500 font-semibold text-white shadow-sm ring-2 ring-white dark:ring-slate-900">
-            <Zap size={14} />
-          </div>
-          <div className="hidden text-left text-xs lg:block">
-            <p className="font-semibold text-slate-900 dark:text-slate-100">Executive Team</p>
-            <p className="text-[10px] text-slate-400 dark:text-slate-500">Skylark Drones</p>
+        <div className="flex items-center gap-2 border-l border-slate-200/70 pl-2.5 dark:border-slate-800">
+          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-900 text-[11px] font-bold text-white dark:bg-slate-100 dark:text-slate-900">
+            ST
           </div>
         </div>
       </div>
