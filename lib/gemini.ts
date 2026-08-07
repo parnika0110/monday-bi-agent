@@ -48,7 +48,8 @@ const LEADERSHIP_STYLE_GUIDANCE: Record<string, string> = {
 async function callGeminiOnce(
   prompt: string,
   key: string,
-  model: string
+  model: string,
+  attempt = 1
 ): Promise<string> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
@@ -80,6 +81,14 @@ async function callGeminiOnce(
     );
   } finally {
     clearTimeout(timeout);
+  }
+
+  // Automatic retry on 429 rate limit with exponential backoff pause
+  if (response.status === 429 && attempt <= 3) {
+    const waitTime = attempt * 2500;
+    console.warn(`Gemini 429 rate-limited on model [${model}] (attempt ${attempt}). Pausing ${waitTime}ms before retry...`);
+    await new Promise((r) => setTimeout(r, waitTime));
+    return callGeminiOnce(prompt, key, model, attempt + 1);
   }
 
   if (!response.ok) {
