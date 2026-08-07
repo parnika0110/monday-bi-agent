@@ -107,8 +107,12 @@ function buildLeadershipDataSummary(snapshot: LeadershipSnapshot): string {
 }
 
 /** Deterministic fallback used if Gemini is unavailable, so the agent never hard-fails. */
-function fallbackNarrative(dataSummary: string): string {
-  return `Here's what the data shows (AI summarization is temporarily unavailable, so this is the raw analysis):\n\n${dataSummary}\n\n*(Note: To enable Google Gemini AI analyst narration, ensure a valid Google AI Studio API Key starting with AIzaSy... is set in Platform Settings or Vercel Environment Variables)*`;
+function fallbackNarrative(dataSummary: string, errorStatus?: number): string {
+  const note = errorStatus === 429
+    ? `*(Note: Google Gemini API free-tier rate limit reached [15 requests/min]. AI narration will resume automatically in ~30 seconds.)*`
+    : `*(Note: To enable Google Gemini AI analyst narration, ensure a valid Google AI Studio API Key starting with AIzaSy... is set in Platform Settings or Vercel Environment Variables)*`;
+
+  return `Here's what the data shows (AI summarization is temporarily unavailable, so this is the raw analysis):\n\n${dataSummary}\n\n${note}`;
 }
 
 export async function POST(req: NextRequest) {
@@ -327,7 +331,8 @@ export async function POST(req: NextRequest) {
     // Graceful degradation: never fail the whole request just because the
     // AI summarization layer is down - the underlying analysis is still
     // valuable to a founder.
-    answer = fallbackNarrative(dataSummary);
+    const status = err instanceof GeminiApiError ? err.status : undefined;
+    answer = fallbackNarrative(dataSummary, status);
     if (err instanceof GeminiApiError) {
       console.error("Gemini generation failed:", err.message);
     } else {

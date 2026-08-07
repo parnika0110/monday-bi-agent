@@ -2,9 +2,11 @@ const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models"
 const REQUEST_TIMEOUT_MS = 45000;
 
 export class GeminiApiError extends Error {
-  constructor(message: string) {
+  status?: number;
+  constructor(message: string, status?: number) {
     super(message);
     this.name = "GeminiApiError";
+    this.status = status;
   }
 }
 
@@ -83,7 +85,8 @@ async function callGeminiOnce(
   if (!response.ok) {
     const text = await response.text().catch(() => "");
     throw new GeminiApiError(
-      `Gemini API returned status ${response.status}. ${text.slice(0, 300)}`
+      `Gemini API returned status ${response.status}. ${text.slice(0, 300)}`,
+      response.status
     );
   }
 
