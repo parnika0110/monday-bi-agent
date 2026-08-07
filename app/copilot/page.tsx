@@ -143,18 +143,16 @@ export default function CopilotPage() {
             <span>New Chat</span>
           </button>
 
-          {hasUserMessages && (
-            <button
-              onClick={clearCurrentConversation}
-              className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-600 transition hover:bg-slate-50 hover:text-red-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-slate-800"
-              title="Reset current conversation"
-            >
-              <Trash2 size={13} />
-              <span className="hidden sm:inline">Clear</span>
-            </button>
-          )}
+          <button
+            onClick={clearCurrentConversation}
+            className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-600 transition hover:bg-slate-50 hover:text-red-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-slate-800"
+            title="Reset current conversation"
+          >
+            <Trash2 size={13} />
+            <span>Reset Chat</span>
+          </button>
 
-          {hasUserMessages && (
+          {messages.length > 1 && (
             <button
               onClick={handleExportPdf}
               className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-600 transition hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400"
